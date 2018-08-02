@@ -32,7 +32,7 @@ public class Item {
 
     private boolean added;
     private int totalItemPuchased;
-    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER,cascade = CascadeType.PERSIST)
     private Cart cartToPurchase;
 
     public int getTotalItemPuchased() {

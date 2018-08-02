@@ -1,16 +1,19 @@
 package com.lifebook.Model.Shopping;
 
 import com.lifebook.Model.AppUser;
+import com.lifebook.Service.OrderItem;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.Serializable;
+import java.util.*;
 
 @Entity
-public class Cart {
+public class Cart implements Serializable {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
+   // private static final long serialVersionUID = 4573229359755965961L;
+    private LinkedHashMap<Long, OrderItem> map = new LinkedHashMap<>();
     @OneToMany(mappedBy = "cartToPurchase")
     private Set<Item> itemPurchased;
     private double totalPrice;
@@ -18,47 +21,48 @@ public class Cart {
     @OneToOne(mappedBy = "userCart")
     private AppUser purchaser;
 
-    public Cart() {
-        this.itemPurchased = new HashSet<>();
+    public OrderItem addToCart(OrderItem OrderItem) {
+        //If the item already exists in the cart, increment quantity..
+        if (this.map.containsKey(OrderItem.getItem().getId())) {
+            OrderItem existingOrderItem = this.map.get(OrderItem.getItem().getId());
+            int newQuantity = existingOrderItem.getPurchasedQuantity() + OrderItem.getPurchasedQuantity();
+            OrderItem newOrderItem = new OrderItem(OrderItem.getItem(), newQuantity);
+            this.map.put(OrderItem.getItem().getId(), newOrderItem);
+            return newOrderItem;
+        } else {
+            //assuming only one product at a time..but needs validation check
+            this.map.put(OrderItem.getItem().getId(), OrderItem);
+            return OrderItem;
+        }
     }
 
-    public long getId() {
-        return id;
+    public void removeItemFromCart(Long itemId) {
+        this.map.remove(itemId);
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void updateCart(List<OrderItem> orderItems) {
+        if (orderItems != null) {
+            for (OrderItem orderItem : orderItems) {
+                updateCart(orderItem);
+            }
+        }
     }
 
-    public Set<Item> getItemPurchased() {
-        return itemPurchased;
+    private void updateCart(OrderItem orderProduct) {
+        if (this.map.containsKey(orderProduct.getItem().getId())) {
+            if (orderProduct.getPurchasedQuantity() <= 0) {
+                removeItemFromCart(orderProduct.getItem().getId());
+            } else {
+                map.put(orderProduct.getItem().getId(), orderProduct);
+            }
+        } else {
+            map.put(orderProduct.getItem().getId(), orderProduct);
+        }
     }
 
-    public void setItemPurchased(Set<Item> itemPurchased) {
-        this.itemPurchased = itemPurchased;
+    public List<OrderItem> getItemsInCart() {
+        return new ArrayList<OrderItem>(this.map.values());
     }
 
-    public double getTotalPrice() {
-        return totalPrice;
-    }
 
-    public void setTotalPrice(double totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public int getNumItemPurchased() {
-        return numItemPurchased;
-    }
-
-    public void setNumItemPurchased(int numItemPurchased) {
-        this.numItemPurchased = numItemPurchased;
-    }
-
-    public AppUser getPurchaser() {
-        return purchaser;
-    }
-
-    public void setPurchaser(AppUser purchaser) {
-        this.purchaser = purchaser;
-    }
 }
